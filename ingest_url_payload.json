@@ -1,0 +1,15 @@
+{
+  "tenant_id": "default",
+  "url": "https://httpbin.org/html",
+  "metadata": {
+    "source": "wikipedia",
+    "author": "Test User",
+    "created_at": "2025-10-25T06:27:23Z",
+    "document_type": "reference",
+    "tags": ["ai", "test", "ingestion"],
+    "additional_metadata": {
+      "priority": "medium",
+      "department": "Research"
+    }
+  }
+}

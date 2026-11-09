@@ -1,0 +1,48 @@
+{
+  "file_id": "test-file-001",
+  "organization_id": "test-org-001",
+  "tenant_id": "default",
+  "chunks": [
+    {
+      "content": "SynthDrive RAG Service is a powerful retrieval-augmented generation system designed to enhance AI applications with accurate, contextual information retrieval.",
+      "metadata": {
+        "chunk_id": 0,
+        "chunk_type": "semantic",
+        "semantic_type": "introduction",
+        "chunk_index": 0,
+        "total_chunks": 3,
+        "file_id": "test-file-001",
+        "organization_id": "test-org-001",
+        "chunking_method": "ai_semantic"
+      }
+    },
+    {
+      "content": "The system combines vector search capabilities with knowledge graph technologies to provide comprehensive and relevant responses to user queries. It features multi-tenant architecture for data isolation, supports various document types, and offers semantic chunking for optimal text processing.",
+      "metadata": {
+        "chunk_id": 1,
+        "chunk_type": "semantic",
+        "semantic_type": "explanation",
+        "chunk_index": 1,
+        "total_chunks": 3,
+        "file_id": "test-file-001",
+        "organization_id": "test-org-001",
+        "chunking_method": "ai_semantic"
+      }
+    },
+    {
+      "content": "Key features include hybrid retrieval combining vector search and graph-based knowledge retrieval, semantic chunking for meaningful text segmentation, entity extraction and relationship mapping, multi-tenant data isolation, and support for various document types.",
+      "metadata": {
+        "chunk_id": 2,
+        "chunk_type": "semantic",
+        "semantic_type": "features",
+        "chunk_index": 2,
+        "total_chunks": 3,
+        "file_id": "test-file-001",
+        "organization_id": "test-org-001",
+        "chunking_method": "ai_semantic"
+      }
+    }
+  ],
+  "status": "processing",
+  "processing_log": ["Embedding generation started"]
+}

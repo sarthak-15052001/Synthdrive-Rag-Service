@@ -1,0 +1,12 @@
+{
+  "query_str": "How does the ingestion pipeline work?",
+  "tenant_id": "default",
+  "top_k": 5,
+  "filters": {
+    "document_type": "documentation",
+    "tags": [
+      "rag",
+      "ingestion"
+    ]
+  }
+}

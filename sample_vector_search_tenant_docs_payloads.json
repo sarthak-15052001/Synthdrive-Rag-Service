@@ -1,0 +1,60 @@
+{
+  "payload1": {
+    "query": "financial performance report for 2023",
+    "organization_id": "test_org_123",
+    "tenant_id": "default",
+    "filters": {
+      "file_type": "pdf",
+      "tags": ["financial", "2023"]
+    },
+    "limit": 5
+  },
+  
+  "payload2": {
+    "query": "marketing strategy and target demographics",
+    "organization_id": "test_org_123",
+    "tenant_id": "default",
+    "filters": {
+      "file_type": "docx",
+      "tags": ["marketing", "strategy"]
+    },
+    "limit": 5
+  },
+  
+  "payload3": {
+    "query": "product roadmap and AI-powered analytics platform",
+    "organization_id": "test_org_123",
+    "tenant_id": "default",
+    "filters": {
+      "file_type": "pptx",
+      "tags": ["product", "roadmap"]
+    },
+    "limit": 5
+  },
+  
+  "payload4": {
+    "query": "all reports and documents for 2023",
+    "organization_id": "test_org_123",
+    "tenant_id": "default",
+    "filters": {
+      "tags": ["2023"]
+    },
+    "limit": 5
+  },
+  
+  "payload5": {
+    "query": "business strategy and performance insights",
+    "organization_id": "test_org_123",
+    "tenant_id": "default",
+    "filters": {},
+    "limit": 5
+  },
+  
+  "simple_payload": {
+    "query": "important documents",
+    "organization_id": "test_org_123",
+    "tenant_id": "default",
+    "filters": {},
+    "limit": 10
+  }
+}

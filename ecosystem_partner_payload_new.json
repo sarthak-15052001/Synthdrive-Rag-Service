@@ -1,0 +1,12 @@
+{
+  "name": "DataInnovate Solutions",
+  "bio": "DataInnovate Solutions is a premier data analytics and AI consulting firm specializing in helping businesses leverage their data for strategic decision-making and operational efficiency.",
+  "expertise": ["Data Analytics", "AI Implementation", "Business Intelligence", "Data Strategy"],
+  "certifications": ["AWS Data Analytics Specialty", "Google Data Engineer", "Microsoft Azure Data Scientist"],
+  "case_studies": "Implemented a comprehensive data analytics platform for a Fortune 100 financial services company, resulting in 45% faster insights generation and $3.2M annual cost savings.",
+  "website": "https://datainnovate-solutions.example.com",
+  "contact_info": "partners@datainnovate-solutions.example.com",
+  "budget_tier": "Enterprise",
+  "tags": ["Data", "Analytics", "AI", "Enterprise"],
+  "tenant_id": "default"
+}

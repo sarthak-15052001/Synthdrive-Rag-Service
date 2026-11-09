@@ -1,0 +1,9 @@
+{
+  "file_id": "test-file-001",
+  "organization_id": "test-org-001",
+  "tenant_id": "default",
+  "raw_text": "SynthDrive RAG Service is a powerful retrieval-augmented generation system designed to enhance AI applications with accurate, contextual information retrieval.",
+  "gcs_path": "gs://synthdrive-rag/test-documents/test-file-001.txt",
+  "status": "processing",
+  "processing_log": ["Test started via curl"]
+}

@@ -1,0 +1,5 @@
+{
+  "query_str": "Explain how GraphRAG works in SynthDrive",
+  "tenant_id": "custom_tenant",
+  "top_k": 5
+}

@@ -1,0 +1,52 @@
+{
+  "ai_tools_query": {
+    "query": "What AI tools are available for video generation?",
+    "organization_id": "org-123",
+    "tenant_id": "default"
+  },
+  "ecosystem_partners_query": {
+    "query": "Find ecosystem partners with expertise in supply chain optimization",
+    "organization_id": "org-123",
+    "tenant_id": "default"
+  },
+  "learning_resources_query": {
+    "query": "I need learning resources about fine-tuning large language models",
+    "organization_id": "org-123",
+    "tenant_id": "default"
+  },
+  "tenant_files_query": {
+    "query": "Find our company's financial reports from 2023",
+    "organization_id": "org-123",
+    "tenant_id": "default"
+  },
+  "complex_query": {
+    "query": "What AI tools can help with video generation and which partners can implement them?",
+    "organization_id": "org-123",
+    "tenant_id": "default"
+  },
+  "relationship_query": {
+    "query": "How are our marketing campaigns related to customer acquisition?",
+    "organization_id": "org-123",
+    "tenant_id": "default"
+  },
+  "multi_collection_query": {
+    "query": "Find learning resources about AI tools for data visualization",
+    "organization_id": "org-123",
+    "tenant_id": "default"
+  },
+  "specific_tool_query": {
+    "query": "Tell me about Midjourney and similar AI image generation tools",
+    "organization_id": "org-123",
+    "tenant_id": "default"
+  },
+  "specific_partner_query": {
+    "query": "Which ecosystem partners specialize in AI implementation for healthcare?",
+    "organization_id": "org-123",
+    "tenant_id": "default"
+  },
+  "specific_document_query": {
+    "query": "Find the Q4 financial report from our finance department",
+    "organization_id": "org-123",
+    "tenant_id": "default"
+  }
+}

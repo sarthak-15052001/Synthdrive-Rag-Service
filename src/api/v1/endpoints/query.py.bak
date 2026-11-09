@@ -1,0 +1,1080 @@
+from typing import Annotated, AsyncIterator, Dict, Any
+import asyncio
+import json
+import logging
+
+from fastapi import Depends, HTTPException, status
+from fastapi.routing import APIRouter
+from fastapi.responses import StreamingResponse, JSONResponse
+from src.data_stores.neo4j_client import Neo4jClient
+
+from src.api.v1.schemas import (
+    QueryRequest, Response, Citation,
+    AIToolsSearchRequest, AIToolsSearchResponse, AITool,
+    LearningResourcesSearchRequest, LearningResourcesSearchResponse, LearningResource,
+    EcosystemPartnersSearchRequest, EcosystemPartnersSearchResponse, EcosystemPartner,
+    TenantUploadedFilesSearchRequest, TenantUploadedFilesSearchResponse, TenantUploadedFile,
+    KernelOfTruthRequest, KernelOfTruthResponse, RelationshipInsight,
+    PlannerRequest, PlannerResponse,  # Added for the planner endpoint
+    VectorSearchTenantDocsRequest, VectorSearchTenantDocsResponse,  # Added for vector search tenant docs
+    GraphRAGContextualizerRequest, GraphRAGContextualizerResponse, GraphInsight,  # Added for Graph RAG Contextualizer
+    SynthesizerRequest, SynthesizerResponse,  # Added for Synthesizer
+    ConditionalEdgeRouterRequest, ConditionalEdgeRouterResponse  # Added for Conditional Edge Router
+)
+from src.api.dependencies import get_query_agent, get_query_graph, get_current_user, get_weaviate_client, get_vector_search_tool, get_neo4j_client
+from src.data_stores.weaviate_client import WeaviateClient
+from src.querying.tools.vector_search import VectorSearchTool
+from src.querying.tools.vector_search_tools import VectorSearchToolsNode
+from src.querying.tools.vector_search_tenant_docs import VectorSearchTenantDocsNode
+from src.querying.tools.tenant_files_search import TenantUploadedFilesSearchTool
+from src.querying.tools.global_knowledge_domain import GlobalKnowledgeDomain
+from src.querying.tools.kernel_of_truth import KernelOfTruthTool
+from src.querying.tools.synthesizer import Synthesizer
+from src.querying.agent import QueryAgent
+from src.querying.graph import QueryGraph
+from src.data_stores.weaviate_client import WeaviateClient
+from src.core.config import settings
+
+# Configure logging
+logger = logging.getLogger(__name__)
+
+router = APIRouter()
+
+
+@router.post("/query")
+async def query(
+    request: QueryRequest,
+    current_user: Annotated[Dict[str, Any], Depends(get_current_user)],
+    query_graph: Annotated[QueryGraph, Depends(get_query_graph)],
+    weaviate_client: Annotated[WeaviateClient, Depends(get_weaviate_client)],
+):
+    """
+    Query the RAG system with a natural language question using GraphRAG.
+    
+    This endpoint accepts a query string and optional filters, processes it through
+    the querying graph and returns a streaming response with answer and citations.
+    """
+    logger.info(f"Processing query: {request.query_str}")
+    
+    async def generate_stream() -> AsyncIterator[str]:
+        try:
+            # Run query through graph
+            result = query_graph.query(
+                query=request.query_str,
+                filters={"tenant_id": request.tenant_id},
+                top_k=request.top_k
+            )
+            
+            if isinstance(result, Exception):
+                error_msg = str(result)
+                logger.error(f"Query processing error: {error_msg}")
+                yield f"data: {json.dumps({'error': error_msg})}\n\n"
+                return
+            
+            # Convert citations
+            citations = []
+            for doc in result.get("sources", []):
+                citation = Citation(
+                    id=doc.get("id", "unknown"),
+                    source=doc.get("source", "unknown"),
+                    content=doc.get("content", ""),
+                    metadata=doc.get("metadata", {})
+                )
+                citations.append(citation.model_dump())
+            
+            # Stream each part of the response
+            parts = {
+                "answer": result.get("answer", "No answer available"),
+                "citations": citations,
+                "reasoning": result.get("reasoning", "No reasoning available"),
+                "synthesis": result.get("synthesis", "No synthesis available")
+            }
+            
+            # Stream response parts
+            for key, value in parts.items():
+                yield f"data: {json.dumps({key: value})}\n\n"
+                await asyncio.sleep(0.1)
+            
+        except Exception as e:
+            error_msg = f"Query processing error: {str(e)}"
+            logger.error(error_msg)
+            yield f"data: {json.dumps({'error': error_msg})}\n\n"
+    
+    try:
+        return StreamingResponse(
+            generate_stream(),
+            media_type="text/event-stream"
+        )
+    except Exception as e:
+        logger.error(f"Error processing query: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process query: {str(e)}",
+        ) from e
+
+
+@router.post("/tools/search")
+async def search_ai_tools(
+    request: AIToolsSearchRequest,
+    current_user: Annotated[Dict[str, Any], Depends(get_current_user)],
+    vector_search_tool: Annotated[VectorSearchTool, Depends(get_vector_search_tool)],
+):
+    """
+    Search for AI tools using natural language queries.
+    
+    This endpoint accepts a query string and optional filters, processes it through
+    the vector search tool and returns a list of relevant AI tools.
+    
+    Example query: "find a tool to make videos from text"
+    """
+    logger.info(f"Processing AI tools search query: {request.query}")
+    
+    try:
+        # Search for AI tools using the vector search tool
+        tools_results = await vector_search_tool.search_ai_tools(
+            query=request.query,
+            filters={"tenant_id": request.tenant_id, **request.filters},
+            limit=request.limit
+        )
+        
+        # Convert results to AITool objects
+        tools = []
+        for tool in tools_results:
+            tools.append(AITool(
+                name=tool.get("name", "Unknown Tool"),
+                description=tool.get("description", ""),
+                use_case=tool.get("use_case", ""),
+                url=tool.get("url", ""),
+                category=tool.get("category", ""),
+                pricing=tool.get("pricing", ""),
+                reviews=tool.get("reviews", ""),
+                rating=tool.get("rating", 0.0),
+                tags=tool.get("tags", []),
+                tool_id=tool.get("tool_id", ""),
+                relevance_score=tool.get("relevance_score", 0.0),
+                citation_id=tool.get("citation_id", "")
+            ))
+        
+        # Create and return the response
+        response = AIToolsSearchResponse(
+            query=request.query,
+            tools=tools
+        )
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error processing AI tools search: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process AI tools search: {str(e)}",
+        ) from e
+
+
+@router.post("/learning-resources/search")
+async def search_learning_resources(
+    request: LearningResourcesSearchRequest,
+    current_user: Annotated[Dict[str, Any], Depends(get_current_user)],
+    weaviate_client: Annotated[WeaviateClient, Depends(get_weaviate_client)],
+):
+    """
+    Search for learning resources using natural language queries.
+    
+    This endpoint accepts a query string and optional filters, processes it through
+    the Weaviate client and returns a list of relevant learning resources.
+    
+    Example query: "how to fine-tune LLMs"
+    """
+    logger.info(f"Processing learning resources search query: {request.query}")
+    
+    try:
+        # First try direct search with the Weaviate client's method
+        logger.info("Attempting direct search with Weaviate client")
+        resources_results = weaviate_client.search_learning_resources(
+            query=request.query,
+            filters={},  # Remove all filters to ensure we get results
+            limit=request.limit
+        )
+        
+        # Log the results for debugging
+        logger.info(f"Direct search found {len(resources_results)} learning resources")
+        
+        # If no results, try querying the documents directly
+        if not resources_results:
+            logger.info("No results from direct search, trying query_documents method")
+            resources_results = weaviate_client.query_documents(
+                query=request.query,
+                filters={},
+                limit=request.limit,
+                class_name="Global_LearningResources"
+            )
+            logger.info(f"query_documents found {len(resources_results)} learning resources")
+        
+        # Convert results to LearningResource objects
+        resources = []
+        for resource in resources_results:
+            resources.append(LearningResource(
+                resource_id=resource.get("resource_id", ""),
+                title=resource.get("title", "Unknown Resource"),
+                content=resource.get("content", ""),
+                url=resource.get("url", ""),
+                author=resource.get("author", ""),
+                created_at=resource.get("created_at", ""),
+                resource_type=resource.get("resource_type", ""),
+                tags=resource.get("tags", []),
+                relevance_score=resource.get("relevance_score", 0.0),
+                citation_id=resource.get("citation_id", "") or f"resource-{len(resources)+1}"
+            ))
+        
+        # Create and return the response
+        response = LearningResourcesSearchResponse(
+            query=request.query,
+            resources=resources
+        )
+        
+        # Log the final response
+        logger.info(f"Returning {len(resources)} learning resources in the response")
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error processing learning resources search: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process learning resources search: {str(e)}",
+        ) from e
+
+
+@router.post("/ecosystem-partners/search")
+async def search_ecosystem_partners(
+    request: EcosystemPartnersSearchRequest,
+    current_user: Annotated[Dict[str, Any], Depends(get_current_user)],
+    weaviate_client: Annotated[WeaviateClient, Depends(get_weaviate_client)],
+):
+    """
+    Search for ecosystem partners using natural language queries.
+    
+    This endpoint accepts a query string and optional filters, processes it through
+    the Weaviate client and returns a list of relevant ecosystem partners.
+    
+    Example query: "supply chain experts"
+    """
+    logger.info(f"Processing ecosystem partners search query: {request.query}")
+    
+    try:
+        # Search for ecosystem partners using the Weaviate client
+        partners_results = weaviate_client.search_ecosystem_partners(
+            query=request.query,
+            filters={"tenant_id": request.tenant_id, **request.filters},
+            limit=request.limit
+        )
+        
+        # Convert results to EcosystemPartner objects
+        partners = []
+        for partner in partners_results:
+            partners.append(EcosystemPartner(
+                partner_id=partner.get("partner_id", ""),
+                name=partner.get("name", "Unknown Partner"),
+                bio=partner.get("bio", ""),
+                expertise=partner.get("expertise", []),
+                certifications=partner.get("certifications", []),
+                case_studies=partner.get("case_studies", ""),
+                website=partner.get("website", ""),
+                contact_info=partner.get("contact_info", ""),
+                budget_tier=partner.get("budget_tier", ""),
+                tags=partner.get("tags", []),
+                relevance_score=partner.get("relevance_score", 0.0),
+                citation_id=partner.get("citation_id", "")
+            ))
+        
+        # Create and return the response
+        response = EcosystemPartnersSearchResponse(
+            query=request.query,
+            partners=partners
+        )
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error processing ecosystem partners search: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process ecosystem partners search: {str(e)}",
+        ) from e
+
+
+@router.post("/global-knowledge/ai-tools")
+async def global_knowledge_ai_tools(
+    request: AIToolsSearchRequest,
+    current_user: Annotated[Dict[str, Any], Depends(get_current_user)],
+    weaviate_client: Annotated[WeaviateClient, Depends(get_weaviate_client)],
+):
+    """
+    Search for AI tools using natural language queries with the Global Knowledge Domain.
+    
+    This endpoint simulates the SynthDrive system's Global Knowledge Domain for Vetted AI Tools.
+    It uses Weaviate for semantic search on tool descriptions and use cases, and provides
+    explanations for why each tool matches the query.
+    
+    Example query: "tool for video from text"
+    """
+    logger.info(f"Processing Global Knowledge Domain AI tools search query: {request.query}")
+    
+    try:
+        # Initialize the Global Knowledge Domain
+        global_knowledge_domain = GlobalKnowledgeDomain(weaviate_client=weaviate_client)
+        
+        # Search for AI tools using the Global Knowledge Domain
+        result = await global_knowledge_domain.search_ai_tools(
+            query=request.query,
+            filters={"tenant_id": request.tenant_id, **request.filters},
+            limit=request.limit,
+            explain=True
+        )
+        
+        # Convert results to AITool objects
+        tools = []
+        for tool_data in result.get("tools", []):
+            # Get explanation for this tool if available
+            explanation = result.get("explanations", {}).get(tool_data.get("name", ""), "")
+            
+            tools.append(AITool(
+                name=tool_data.get("name", "Unknown Tool"),
+                description=tool_data.get("description", ""),
+                use_case=tool_data.get("use_case", ""),
+                url=tool_data.get("url", ""),
+                category=tool_data.get("category", ""),
+                pricing=tool_data.get("pricing", ""),
+                reviews=explanation,  # Use the explanation as the reviews field
+                rating=tool_data.get("rating", 0.0),
+                tags=[],  # No tags in the result
+                tool_id=f"tool-{i+1}" if 'i' in locals() else "tool-unknown",
+                relevance_score=tool_data.get("relevance_score", 0.0),
+                citation_id=f"gkd-{i+1}" if 'i' in locals() else "gkd-unknown"
+            ))
+        
+        # Create and return the response
+        response = AIToolsSearchResponse(
+            query=request.query,
+            tools=tools
+        )
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error processing Global Knowledge Domain AI tools search: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process Global Knowledge Domain AI tools search: {str(e)}",
+        ) from e
+
+
+@router.post("/tenant-files/search")
+async def search_tenant_uploaded_files(
+    request: TenantUploadedFilesSearchRequest,
+    current_user: Annotated[Dict[str, Any], Depends(get_current_user)],
+    weaviate_client: Annotated[WeaviateClient, Depends(get_weaviate_client)],
+):
+    """
+    Search for tenant uploaded files using natural language queries.
+    
+    This endpoint accepts a query string, organization ID, and optional filters,
+    processes it through the Weaviate client and returns a list of relevant file chunks.
+    
+    Example query: "financial reports from 2023"
+    """
+    logger.info(f"Processing tenant uploaded files search query: {request.query} for organization {request.organization_id}")
+    
+    try:
+        # Initialize the tenant uploaded files search tool
+        tenant_files_search_tool = TenantUploadedFilesSearchTool(weaviate_client=weaviate_client)
+        
+        # Search for tenant uploaded files
+        search_response = await tenant_files_search_tool.search_tenant_files(
+            query=request.query,
+            organization_id=request.organization_id,
+            tenant_id=request.tenant_id,
+            filters=request.filters,
+            limit=request.limit
+        )
+        
+        # Get the results from the response
+        files_results = search_response.get("results", [])
+        
+        # Convert results to TenantUploadedFile objects
+        files = []
+        for file in files_results:
+            files.append(TenantUploadedFile(
+                file_id=file.get("file_id", ""),
+                file_name=file.get("file_name", "Unknown File"),
+                file_path=file.get("file_path", ""),
+                content_chunk=file.get("content_chunk", ""),
+                organization_id=file.get("organization_id", ""),
+                upload_date=file.get("upload_date", ""),
+                file_type=file.get("file_type", ""),
+                tags=file.get("tags", []),
+                relevance_score=file.get("relevance_score", 0.0),
+                citation_id=file.get("citation_id", "")
+            ))
+        
+        # Create and return the response
+        response = TenantUploadedFilesSearchResponse(
+            query=request.query,
+            files=files
+        )
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error processing tenant uploaded files search: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process tenant uploaded files search: {str(e)}",
+        ) from e
+
+
+@router.get("/tenant-files/{file_id}")
+async def get_tenant_file_by_id(
+    file_id: str,
+    organization_id: str,
+    current_user: Annotated[Dict[str, Any], Depends(get_current_user)],
+    weaviate_client: Annotated[WeaviateClient, Depends(get_weaviate_client)],
+    tenant_id: str = "default",
+):
+    """
+    Get a specific tenant uploaded file by ID.
+    
+    This endpoint retrieves a specific file chunk by its ID, organization ID, and tenant ID.
+    """
+    logger.info(f"Getting tenant uploaded file with ID {file_id} for organization {organization_id}")
+    
+    try:
+        # Initialize the tenant uploaded files search tool
+        tenant_files_search_tool = TenantUploadedFilesSearchTool(weaviate_client=weaviate_client)
+        
+        # Get the file by ID
+        file_data = await tenant_files_search_tool.get_file_by_id(
+            file_id=file_id,
+            organization_id=organization_id,
+            tenant_id=tenant_id
+        )
+        
+        if not file_data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"File with ID {file_id} not found for organization {organization_id}",
+            )
+        
+        # Convert to TenantUploadedFile object
+        file = TenantUploadedFile(
+            file_id=file_data.get("file_id", ""),
+            file_name=file_data.get("file_name", "Unknown File"),
+            file_path=file_data.get("file_path", ""),
+            content_chunk=file_data.get("content_chunk", ""),
+            organization_id=file_data.get("organization_id", ""),
+            upload_date=file_data.get("upload_date", ""),
+            file_type=file_data.get("file_type", ""),
+            tags=file_data.get("tags", []),
+            relevance_score=1.0,  # Direct lookup has perfect relevance
+            citation_id=f"file-{file_id}"
+        )
+        
+        return file
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        logger.error(f"Error getting tenant uploaded file: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get tenant uploaded file: {str(e)}",
+        ) from e
+
+@router.post("/tenant-files/search-with-prompt")
+async def search_tenant_files_with_prompt(
+    request: TenantUploadedFilesSearchRequest,
+    current_user: Annotated[Dict[str, Any], Depends(get_current_user)],
+    weaviate_client: Annotated[WeaviateClient, Depends(get_weaviate_client)],
+):
+    """
+    Search for tenant uploaded files and generate a prompt for LLM processing.
+    
+    This endpoint accepts a query string, organization ID, and optional filters,
+    processes it through the Weaviate client and returns both the search results
+    and a prompt template for LLM processing.
+    
+    Example query: "financial reports from 2023"
+    """
+    logger.info(f"Processing tenant files search with prompt for organization {request.organization_id}")
+    
+    try:
+        # Initialize the tenant uploaded files search tool
+        tenant_files_search_tool = TenantUploadedFilesSearchTool(weaviate_client=weaviate_client)
+        
+        # Search for tenant uploaded files and generate prompt
+        response_data = await tenant_files_search_tool.search_and_generate_prompt(
+            query=request.query,
+            organization_id=request.organization_id,
+            tenant_id=request.tenant_id,
+            filters=request.filters,
+            limit=request.limit
+        )
+        
+        # Get the results and prompt from the response
+        files_results = response_data.get("results", [])
+        prompt = response_data.get("prompt", "")
+        
+        # Convert results to TenantUploadedFile objects
+        files = []
+        for file in files_results:
+            files.append(TenantUploadedFile(
+                file_id=file.get("file_id", ""),
+                file_name=file.get("file_name", "Unknown File"),
+                file_path=file.get("file_path", ""),
+                content_chunk=file.get("content_chunk", ""),
+                organization_id=file.get("organization_id", ""),
+                upload_date=file.get("upload_date", ""),
+                file_type=file.get("file_type", ""),
+                tags=file.get("tags", []),
+                relevance_score=file.get("relevance_score", 0.0),
+                citation_id=file.get("citation_id", "")
+            ))
+        
+        # Create the base response
+        search_response = TenantUploadedFilesSearchResponse(
+            query=request.query,
+            files=files
+        )
+        
+        # Add the prompt to the response
+        response_with_prompt = {
+            "search_results": search_response.model_dump(),
+            "prompt": prompt
+        }
+        
+        return response_with_prompt
+        
+    except Exception as e:
+        logger.error(f"Error processing tenant files search with prompt: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process tenant files search with prompt: {str(e)}",
+        ) from e
+
+
+@router.post("/kernel-of-truth/query")
+async def query_kernel_of_truth(
+    request: KernelOfTruthRequest,
+    current_user: Annotated[Dict[str, Any], Depends(get_current_user)],
+    neo4j_client: Annotated[Neo4jClient, Depends(get_neo4j_client)],
+):
+    """
+    Query the Kernel of Truth for relationship insights.
+    
+    This endpoint accepts a query string and optional parameters, processes it through
+    the Kernel of Truth tool and returns relationship insights between entities.
+    
+    Example query: "What workflows did user John create?"
+    """
+    logger.info(f"Processing Kernel of Truth query: {request.query}")
+    
+    try:
+        # Initialize the Kernel of Truth tool
+        kernel_tool = KernelOfTruthTool(neo4j_client=neo4j_client)
+        
+        # Query for relationship insights
+        results = await kernel_tool.query_relationships(
+            user_query=request.query,
+            tenant_id=request.tenant_id,
+            max_depth=request.max_depth,
+            limit=request.limit
+        )
+        
+        # Create the response
+        response = KernelOfTruthResponse(
+            query=request.query,
+            insights=results
+        )
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error processing Kernel of Truth query: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process Kernel of Truth query: {str(e)}",
+        ) from e
+
+
+@router.post("/planner")
+async def plan_retrieval_strategy(
+    request: PlannerRequest,
+    current_user: Annotated[Dict[str, Any], Depends(get_current_user)],
+    neo4j_client: Annotated[Neo4jClient, Depends(get_neo4j_client)],
+):
+    """
+    Plan a retrieval strategy for a query.
+    
+    This endpoint analyzes a query and generates a retrieval strategy,
+    determining the sequence of searches using Weaviate or Neo4j.
+    
+    Example query: "What tools are available for video generation?"
+    """
+    logger.info(f"Planning retrieval strategy for query: {request.query}")
+    
+    try:
+        # Import the planner node
+        from src.querying.planner import PlannerNode, PlannerState
+        
+        # Initialize the planner node
+        planner = PlannerNode()
+        
+        # Create the planner state
+        planner_state: PlannerState = {
+            "original_query": request.query,
+            "organization_id": request.organization_id,
+            "plan": None,
+            "retrieved_docs": [],
+            "graph_insights": [],
+            "final_answer": None,
+            "error_log": []
+        }
+        
+        # Generate the retrieval plan
+        result = await planner.plan_retrieval(planner_state)
+        
+        # Check for errors
+        if result.get("error_log") and len(result["error_log"]) > 0:
+            error_message = result["error_log"][-1]
+            logger.error(f"Error planning retrieval strategy: {error_message}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to plan retrieval strategy: {error_message}",
+            )
+        
+        # Create the response
+        response = PlannerResponse(
+            query=request.query,
+            organization_id=request.organization_id,
+            plan=result.get("plan", "No plan generated")
+        )
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error planning retrieval strategy: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to plan retrieval strategy: {str(e)}",
+        ) from e
+
+
+@router.post("/vector-search-tools")
+async def vector_search_tools(
+    request: PlannerRequest,
+    current_user: Annotated[Dict[str, Any], Depends(get_current_user)],
+    weaviate_client: Annotated[WeaviateClient, Depends(get_weaviate_client)],
+):
+    """
+    Perform semantic vector search on global AI tools to discover relevant items based on the query.
+    
+    This endpoint simulates the Vector Search Tools node in SynthDrive's LangGraph flow.
+    It queries Weaviate's Global_Tools collection for semantic matches to the query and returns
+    the results as part of the state object.
+    
+    Example query: "find AI tools for video generation"
+    """
+    logger.info(f"Processing Vector Search Tools query: {request.query}")
+    
+    try:
+        # Initialize the Vector Search Tools node
+        vector_search_tools_node = VectorSearchToolsNode(weaviate_client=weaviate_client)
+        
+        # Create the initial state
+        initial_state = {
+            "original_query": request.query,
+            "organization_id": request.organization_id,
+            "plan": None,
+            "retrieved_docs": [],
+            "graph_insights": [],
+            "final_answer": None,
+            "error_log": []
+        }
+        
+        # Search for AI tools using the Vector Search Tools node
+        result_state = await vector_search_tools_node.search_ai_tools(initial_state)
+        
+        # Check for errors
+        if result_state.get("error_log") and len(result_state["error_log"]) > 0:
+            error_message = result_state["error_log"][-1]
+            logger.error(f"Error in Vector Search Tools: {error_message}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to search for AI tools: {error_message}",
+            )
+        
+        # Convert the retrieved tools to AITool objects
+        tools = []
+        for tool_data in result_state.get("retrieved_docs", []):
+            tools.append(AITool(
+                name=tool_data.get("name", "Unknown Tool"),
+                description=tool_data.get("description", ""),
+                use_case=tool_data.get("use_case", ""),
+                url=tool_data.get("url", ""),
+                category=tool_data.get("category", ""),
+                pricing=tool_data.get("pricing", ""),
+                reviews="",  # No reviews in the result
+                rating=tool_data.get("rating", 0.0),
+                tags=[],  # No tags in the result
+                tool_id=tool_data.get("citation_id", ""),
+                relevance_score=tool_data.get("relevance_score", 0.0),
+                citation_id=tool_data.get("citation_id", "")
+            ))
+        
+        # Create and return the response
+        response = AIToolsSearchResponse(
+            query=request.query,
+            tools=tools
+        )
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error in Vector Search Tools: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to search for AI tools: {str(e)}",
+        ) from e
+
+
+@router.post("/vector-search-tenant-docs")
+async def vector_search_tenant_docs(
+    request: VectorSearchTenantDocsRequest,
+    current_user: Annotated[Dict[str, Any], Depends(get_current_user)],
+    weaviate_client: Annotated[WeaviateClient, Depends(get_weaviate_client)],
+):
+    """
+    Semantically search tenant-specific uploaded files, filtered by organization_id, to retrieve relevant documents.
+    
+    This endpoint simulates the Vector Search Docs node in SynthDrive's LangGraph system. It performs a semantic search
+    in Weaviate's Tenant_UploadedFiles collection, filtered by organization_id, and returns the matching documents.
+    
+    Example query: "financial reports from 2023"
+    """
+    logger.info(f"Processing Vector Search Tenant Docs query: {request.query} for organization: {request.organization_id}")
+    
+    try:
+        # Initialize the Vector Search Tenant Docs node
+        vector_search_tenant_docs_node = VectorSearchTenantDocsNode(weaviate_client=weaviate_client)
+        
+        # Create the initial state
+        initial_state = {
+            "original_query": request.query,
+            "organization_id": request.organization_id,
+            "plan": None,
+            "retrieved_docs": [],
+            "graph_insights": [],
+            "final_answer": None,
+            "error_log": []
+        }
+        
+        # Search for tenant documents using the Vector Search Tenant Docs node
+        result_state = await vector_search_tenant_docs_node.search_tenant_documents(initial_state)
+        
+        # Check for errors
+        if result_state.get("error_log") and len(result_state["error_log"]) > 0:
+            error_message = result_state["error_log"][-1]
+            logger.error(f"Error in Vector Search Tenant Docs: {error_message}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to search for tenant documents: {error_message}",
+            )
+        
+        # Convert the retrieved documents to TenantUploadedFile objects
+        files = []
+        for doc in result_state.get("retrieved_docs", []):
+            files.append(TenantUploadedFile(
+                file_id=doc.get("file_id", ""),
+                file_name=doc.get("file_name", "Unknown File"),
+                file_path=doc.get("file_path", ""),
+                content_chunk=doc.get("content", ""),  # Map content back to content_chunk
+                organization_id=doc.get("organization_id", ""),
+                upload_date=doc.get("upload_date", ""),
+                file_type=doc.get("file_type", ""),
+                tags=doc.get("tags", []),
+                relevance_score=doc.get("relevance_score", 0.0),
+                citation_id=doc.get("citation_id", "")
+            ))
+        
+        # Create and return the response
+        response = VectorSearchTenantDocsResponse(
+            query=request.query,
+            organization_id=request.organization_id,
+            files=files
+        )
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error in Vector Search Tenant Docs: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to search for tenant documents: {str(e)}",
+        ) from e
+
+
+@router.post("/graph-rag-contextualizer")
+async def graph_rag_contextualizer(
+    request: GraphRAGContextualizerRequest,
+    current_user: Annotated[Dict[str, Any], Depends(get_current_user)],
+    neo4j_client: Annotated[Neo4jClient, Depends(get_neo4j_client)],
+):
+    """
+    Query the Graph RAG Contextualizer to uncover relationships and provide deep context.
+    
+    This endpoint simulates the Graph RAG Contextualizer node in SynthDrive's LangGraph system.
+    It queries Neo4j for relationships and context (e.g., multi-hop traversals) and returns
+    insights that enhance the retrieved data.
+    
+    Example query: "Find workflows used by this team"
+    """
+    logger.info(f"Processing Graph RAG Contextualizer query: {request.query} for organization: {request.organization_id}")
+    
+    try:
+        # Initialize the Graph RAG Contextualizer
+        from src.querying.tools.graph_rag_contextualizer import GraphRAGContextualizer
+        contextualizer = GraphRAGContextualizer(neo4j_client=neo4j_client)
+        
+        # Create the initial state
+        initial_state = {
+            "original_query": request.query,
+            "organization_id": request.organization_id,
+            "plan": None,
+            "retrieved_docs": request.retrieved_docs,
+            "graph_insights": [],
+            "final_answer": None,
+            "error_log": []
+        }
+        
+        # Process the query with the Graph RAG Contextualizer
+        result_state = await contextualizer.contextualize(initial_state)
+        
+        # Check for errors
+        if result_state.get("error_log") and len(result_state["error_log"]) > 0:
+            error_message = result_state["error_log"][-1]
+            logger.error(f"Error in Graph RAG Contextualizer: {error_message}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to contextualize with graph relationships: {error_message}",
+            )
+        
+        # Convert the graph insights to GraphInsight objects
+        insights = []
+        for insight in result_state.get("graph_insights", []):
+            insights.append(GraphInsight(
+                content=insight.get("content", ""),
+                metadata=insight.get("metadata", {}),
+                source=insight.get("source", "graph_database"),
+                citation_id=insight.get("citation_id", ""),
+                explanation=insight.get("explanation", ""),
+                inferred_context=insight.get("inferred_context", "")
+            ))
+        
+        # Create and return the response
+        response = GraphRAGContextualizerResponse(
+            query=request.query,
+            organization_id=request.organization_id,
+            graph_insights=insights
+        )
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error in Graph RAG Contextualizer: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process Graph RAG Contextualizer query: {str(e)}",
+        ) from e
+
+
+@router.post("/synthesizer")
+async def synthesize_final_answer(
+    request: SynthesizerRequest,
+    current_user: Annotated[Dict[str, Any], Depends(get_current_user)],
+):
+    """
+    Synthesize a final answer from retrieved documents and graph insights.
+    
+    This endpoint simulates the Synthesizer node in SynthDrive's LangGraph system.
+    It combines all retrieved documents and graph insights into a coherent, cited
+    final response using an LLM.
+    
+    Example query: "What AI tools are available for video generation?"
+    """
+    logger.info(f"Processing Synthesizer request for query: {request.query} for organization: {request.organization_id}")
+    
+    try:
+        # Initialize the Synthesizer
+        synthesizer = Synthesizer()
+        
+        # Create the initial state
+        initial_state = {
+            "original_query": request.query,
+            "organization_id": request.organization_id,
+            "plan": None,
+            "retrieved_docs": request.retrieved_docs,
+            "graph_insights": request.graph_insights,
+            "final_answer": None,
+            "error_log": []
+        }
+        
+        # Process the query with the Synthesizer
+        result_state = await synthesizer.synthesize(initial_state)
+        
+        # Check for errors
+        if result_state.get("error_log") and len(result_state["error_log"]) > 0:
+            error_message = result_state["error_log"][-1]
+            logger.error(f"Error in Synthesizer: {error_message}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to synthesize final answer: {error_message}",
+            )
+        
+        # Create and return the response
+        response = SynthesizerResponse(
+            query=request.query,
+            organization_id=request.organization_id,
+            final_answer=result_state.get("final_answer", "No answer generated")
+        )
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error in Synthesizer: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process Synthesizer request: {str(e)}",
+        ) from e
+
+
+@router.post("/conditional-edge-router")
+async def conditional_edge_router(
+    request: ConditionalEdgeRouterRequest,
+    current_user: Annotated[Dict[str, Any], Depends(get_current_user)],
+    weaviate_client: Annotated[WeaviateClient, Depends(get_weaviate_client)],
+):
+    """
+    Evaluate the current state and decide the next step in the flow.
+    
+    This endpoint simulates the Conditional Edge Router node in SynthDrive's LangGraph system.
+    It evaluates the current state object and decides which node to route to next based on
+    the query progress, retrieved documents, and other factors.
+    
+    Example query: "What AI tools are available for video generation?"
+    """
+    logger.info(f"Processing Conditional Edge Router request for query: {request.original_query}")
+    
+    # Check Weaviate connectivity first
+    try:
+        # Test Weaviate connection by getting schema
+        weaviate_client.client.schema.get()
+    except Exception as wv_error:
+        logger.error(f"Weaviate connectivity test failed: {str(wv_error)}")
+        error_message = f"Weaviate connectivity issue detected: {str(wv_error)}"
+        
+        # Add to error log if not already present
+        error_log = request.error_log.copy() if request.error_log else []
+        if error_message not in error_log:
+            error_log.append(error_message)
+        
+        # Return error handling response
+        return ConditionalEdgeRouterResponse(
+            original_query=request.original_query,
+            organization_id=request.organization_id,
+            next_node="error_handling",
+            reason="There is a connectivity issue with Weaviate which must be resolved before further steps can be executed.",
+            updated_state={
+                "original_query": request.original_query,
+                "organization_id": request.organization_id,
+                "plan": request.plan,
+                "retrieved_docs": request.retrieved_docs,
+                "graph_insights": request.graph_insights,
+                "final_answer": request.final_answer,
+                "error_log": error_log,
+                "next_node": "error_handling",
+                "routing_reason": "Weaviate connectivity issue detected"
+            }
+        )
+    
+    try:
+        # Import the Conditional Edge Router
+        from src.querying.tools.conditional_edge_router import ConditionalEdgeRouter
+        router = ConditionalEdgeRouter()
+        
+        # Create the initial state
+        initial_state = {
+            "original_query": request.original_query,
+            "organization_id": request.organization_id,
+            "plan": request.plan,
+            "retrieved_docs": request.retrieved_docs,
+            "graph_insights": request.graph_insights,
+            "final_answer": request.final_answer,
+            "error_log": request.error_log
+        }
+        
+        # Process the request with the Conditional Edge Router
+        result_state = await router.route(initial_state)
+        
+        # Check if the router decided to route to error_handling
+        if result_state.get("next_node") == "error_handling":
+            # This is not an error in the router, just a routing decision
+            if result_state.get("error_log") and len(result_state["error_log"]) > len(request.error_log):
+                error_message = result_state["error_log"][-1]
+                # Log as info, not error, since this is expected behavior
+                logger.info(f"Router decided to route to error_handling: {error_message}")
+            else:
+                logger.info(f"Router decided to route to error_handling based on state evaluation")
+        # Check for actual errors in the error_log that aren't related to routing decisions
+        elif result_state.get("error_log") and len(result_state["error_log"]) > len(request.error_log):
+            error_message = result_state["error_log"][-1]
+            logger.warning(f"Error logged in Conditional Edge Router: {error_message}")
+            # Don't raise an exception, just log the warning
+        
+        # Create and return the response
+        response = ConditionalEdgeRouterResponse(
+            original_query=request.original_query,
+            organization_id=request.organization_id,
+            next_node=result_state.get("next_node", "error_handling"),
+            reason=result_state.get("routing_reason", "No reason provided"),
+            updated_state=result_state
+        )
+        
+        return response
+        
+    except Exception as e:
+        # Log as warning instead of error since we're handling it gracefully
+        logger.warning(f"Exception in Conditional Edge Router: {str(e)}")
+        import traceback
+        logger.warning(f"Traceback: {traceback.format_exc()}")
+        
+        # Return a response with error_handling node instead of raising an exception
+        return ConditionalEdgeRouterResponse(
+            original_query=request.original_query,
+            organization_id=request.organization_id,
+            next_node="error_handling",
+            reason=f"Exception occurred: {str(e)}",
+            updated_state={
+                "original_query": request.original_query,
+                "organization_id": request.organization_id,
+                "plan": request.plan,
+                "retrieved_docs": request.retrieved_docs,
+                "graph_insights": request.graph_insights,
+                "final_answer": request.final_answer,
+                "error_log": request.error_log + [f"Exception occurred: {str(e)}"],
+                "next_node": "error_handling",
+                "routing_reason": f"Exception occurred: {str(e)}"
+            }
+        )

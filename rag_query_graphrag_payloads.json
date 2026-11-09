@@ -1,0 +1,77 @@
+{
+  "sample_payloads": [
+    {
+      "description": "Find workflows used by the Marketing team",
+      "payload": {
+        "query": "Find workflows used by the Marketing team",
+        "organization_id": "test_org",
+        "tenant_id": "default",
+        "retrieved_docs": []
+      }
+    },
+    {
+      "description": "Relationships between Sales and Engineering teams",
+      "payload": {
+        "query": "What are the relationships between the Sales and Engineering teams?",
+        "organization_id": "test_org",
+        "tenant_id": "default",
+        "retrieved_docs": []
+      }
+    },
+    {
+      "description": "Creator of Customer Onboarding workflow",
+      "payload": {
+        "query": "Who created the Customer Onboarding workflow?",
+        "organization_id": "test_org",
+        "tenant_id": "default",
+        "retrieved_docs": []
+      }
+    },
+    {
+      "description": "Knowledge silos in the organization",
+      "payload": {
+        "query": "Find potential knowledge silos in our organization",
+        "organization_id": "test_org",
+        "tenant_id": "default",
+        "retrieved_docs": []
+      }
+    },
+    {
+      "description": "Topics discussed in multiple team meetings",
+      "payload": {
+        "query": "What topics are discussed in multiple team meetings?",
+        "organization_id": "test_org",
+        "tenant_id": "default",
+        "retrieved_docs": []
+      }
+    },
+    {
+      "description": "Complex query with retrieved documents",
+      "payload": {
+        "query": "How are the Product and Marketing teams collaborating on the new product launch?",
+        "organization_id": "test_org",
+        "tenant_id": "default",
+        "retrieved_docs": [
+          {
+            "content": "The Product team has been working on the new product launch scheduled for Q3. They have completed the feature set and are now working with Marketing on messaging.",
+            "metadata": {
+              "source": "meeting_notes",
+              "date": "2025-09-15",
+              "author": "John Smith"
+            },
+            "citation_id": "doc-1"
+          },
+          {
+            "content": "Marketing team is preparing the launch campaign for the new product. They are coordinating with Product on technical specifications and key selling points.",
+            "metadata": {
+              "source": "email",
+              "date": "2025-09-20",
+              "author": "Sarah Johnson"
+            },
+            "citation_id": "doc-2"
+          }
+        ]
+      }
+    }
+  ]
+}

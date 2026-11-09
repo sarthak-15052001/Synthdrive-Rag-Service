@@ -1,0 +1,16 @@
+{
+  "dependencies": [
+    "."
+  ],
+  "graphs": {
+    "document_ingestion_graph": "./src/ingestion/ingestion_pipelines.py:create_document_ingestion_graph",
+    "global_tool_ingestion_graph": "./src/ingestion/ingestion_pipelines.py:create_global_tool_ingestion_graph",
+    "global_learning_resource_ingestion_graph": "./src/ingestion/ingestion_pipelines.py:create_global_learning_resource_ingestion_graph",
+    "global_ecosystem_partner_ingestion_graph": "./src/ingestion/ingestion_pipelines.py:create_global_ecosystem_partner_ingestion_graph",
+    "tenant_file_ingestion_graph": "./src/ingestion/ingestion_pipelines.py:create_tenant_file_ingestion_graph",
+    "gcs_file_ingestion_graph": "./src/ingestion/ingestion_pipelines.py:create_gcs_file_ingestion_graph",
+    "query_graph": "./src/querying/studio_graph.py:create_query_graph"
+  },
+  "env": ".env",
+  "python_version": "3.11"
+}

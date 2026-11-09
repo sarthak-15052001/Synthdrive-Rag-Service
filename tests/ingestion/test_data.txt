@@ -1,0 +1,16 @@
+This is a sample document for testing the ingestion pipeline.
+
+It contains information about several entities:
+
+Person: John Smith
+Organization: Acme Corporation
+Location: New York City
+
+John Smith is the CEO of Acme Corporation, which is headquartered in New York City.
+The company was founded in 2010 and specializes in artificial intelligence solutions.
+
+Acme Corporation has partnerships with several other companies, including:
+- TechGiant Inc. (based in San Francisco)
+- DataSystems LLC (based in Boston)
+
+John Smith previously worked at DataSystems LLC as a Chief Technology Officer.

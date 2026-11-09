@@ -1,0 +1,113 @@
+[
+  {
+    "query": "machine learning tutorials",
+    "resources": [],
+    "_metadata": {
+      "status_code": 200,
+      "response_time": 0.7593433856964111,
+      "timestamp": "2025-10-28T11:05:58.824916",
+      "request_payload": {
+        "query": "machine learning tutorials",
+        "tenant_id": "default",
+        "limit": 5
+      },
+      "data_store": "weaviate"
+    }
+  },
+  {
+    "query": "deep learning examples",
+    "resources": [],
+    "_metadata": {
+      "status_code": 200,
+      "response_time": 0.9323656558990479,
+      "timestamp": "2025-10-28T11:05:59.757816",
+      "request_payload": {
+        "query": "deep learning examples",
+        "tenant_id": "default",
+        "limit": 3
+      },
+      "data_store": "weaviate"
+    }
+  },
+  {
+    "query": "AI tutorials",
+    "resources": [],
+    "_metadata": {
+      "status_code": 200,
+      "response_time": 0.46175360679626465,
+      "timestamp": "2025-10-28T11:06:00.220057",
+      "request_payload": {
+        "query": "AI tutorials",
+        "tenant_id": "default",
+        "limit": 5,
+        "filters": {
+          "resource_type": "tutorial"
+        }
+      },
+      "data_store": "weaviate"
+    }
+  },
+  {
+    "query": "python programming",
+    "resources": [],
+    "_metadata": {
+      "status_code": 200,
+      "response_time": 0.7926404476165771,
+      "timestamp": "2025-10-28T11:06:01.013457",
+      "request_payload": {
+        "query": "python programming",
+        "tenant_id": "default",
+        "limit": 5,
+        "filters": {
+          "tags": [
+            "python"
+          ]
+        }
+      },
+      "data_store": "weaviate"
+    }
+  },
+  {
+    "query": "data science",
+    "resources": [],
+    "_metadata": {
+      "status_code": 200,
+      "response_time": 0.4277637004852295,
+      "timestamp": "2025-10-28T11:06:01.443824",
+      "request_payload": {
+        "query": "data science",
+        "tenant_id": "default",
+        "limit": 5,
+        "filters": {
+          "tags": [
+            "python",
+            "data-science"
+          ]
+        }
+      },
+      "data_store": "weaviate"
+    }
+  },
+  {
+    "query": "machine learning for beginners",
+    "resources": [],
+    "_metadata": {
+      "status_code": 200,
+      "response_time": 0.40192389488220215,
+      "timestamp": "2025-10-28T11:06:01.846296",
+      "request_payload": {
+        "query": "machine learning for beginners",
+        "tenant_id": "default",
+        "limit": 5,
+        "filters": {
+          "resource_type": "tutorial",
+          "tags": [
+            "beginner",
+            "machine-learning"
+          ]
+        }
+      },
+      "data_store": "weaviate"
+    }
+  }
+]

@@ -1,0 +1,90 @@
+{
+  "query": "supply chain experts",
+  "partners": [
+    {
+      "partner_id": "partner-1",
+      "name": "SupplyChain Solutions Inc.",
+      "bio": "SupplyChain Solutions Inc. is a leading consulting firm specializing in end-to-end supply chain optimization. With over 15 years of experience, we help companies streamline their logistics, reduce costs, and improve operational efficiency.",
+      "expertise": [
+        "Supply Chain Optimization",
+        "Logistics Management",
+        "Inventory Control",
+        "Demand Forecasting"
+      ],
+      "certifications": [
+        "APICS Certified Supply Chain Professional",
+        "Six Sigma Black Belt",
+        "ISM Certified Professional in Supply Management"
+      ],
+      "case_studies": "Helped a Fortune 500 retailer reduce inventory costs by 23% while improving order fulfillment rates by implementing advanced forecasting algorithms and warehouse optimization techniques.",
+      "website": "https://supplychainsolutions.example.com",
+      "contact_info": "contact@supplychainsolutions.example.com | +1-555-123-4567",
+      "budget_tier": "enterprise",
+      "tags": [
+        "supply chain",
+        "logistics",
+        "consulting",
+        "enterprise"
+      ],
+      "relevance_score": 0.92,
+      "citation_id": "partner-1"
+    },
+    {
+      "partner_id": "partner-2",
+      "name": "Global Logistics Partners",
+      "bio": "Global Logistics Partners specializes in international supply chain management and cross-border logistics solutions. We help businesses navigate complex global trade regulations and optimize their international operations.",
+      "expertise": [
+        "International Logistics",
+        "Cross-border Supply Chain",
+        "Trade Compliance",
+        "Global Sourcing"
+      ],
+      "certifications": [
+        "Certified International Trade Professional",
+        "Certified Supply Chain Professional",
+        "Licensed Customs Broker"
+      ],
+      "case_studies": "Implemented a global supply chain visibility platform for a manufacturing client, reducing lead times by 35% and customs delays by 60%.",
+      "website": "https://globallogistics.example.com",
+      "contact_info": "info@globallogistics.example.com | +1-555-789-0123",
+      "budget_tier": "mid-market",
+      "tags": [
+        "global",
+        "international",
+        "logistics",
+        "trade"
+      ],
+      "relevance_score": 0.87,
+      "citation_id": "partner-2"
+    },
+    {
+      "partner_id": "partner-3",
+      "name": "Digital Supply Chain Experts",
+      "bio": "We specialize in digital transformation of supply chains using AI, IoT, and blockchain technologies. Our team helps businesses implement cutting-edge solutions to create resilient, transparent, and efficient supply networks.",
+      "expertise": [
+        "Supply Chain Digitization",
+        "Blockchain for Supply Chain",
+        "IoT Implementation",
+        "AI-driven Forecasting"
+      ],
+      "certifications": [
+        "Certified Blockchain Professional",
+        "AWS Certified Solutions Architect",
+        "Microsoft Azure IoT Specialist"
+      ],
+      "case_studies": "Developed a blockchain-based traceability solution for a food producer, enabling end-to-end visibility and reducing product recall time from days to hours.",
+      "website": "https://digitalsupplychain.example.com",
+      "contact_info": "hello@digitalsupplychain.example.com | +1-555-456-7890",
+      "budget_tier": "growth",
+      "tags": [
+        "digital",
+        "blockchain",
+        "IoT",
+        "AI",
+        "technology"
+      ],
+      "relevance_score": 0.83,
+      "citation_id": "partner-3"
+    }
+  ]
+}

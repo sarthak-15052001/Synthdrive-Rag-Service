@@ -1,0 +1,31 @@
+{
+  "class": "Global_Ecosystem",
+  "properties": {
+    "name": "SupplyChain Solutions Inc.",
+    "bio": "SupplyChain Solutions Inc. is a leading consulting firm specializing in end-to-end supply chain optimization. With over 15 years of experience, we help companies streamline their logistics, reduce costs, and improve operational efficiency.",
+    "expertise": [
+      "Supply Chain Optimization",
+      "Logistics Management",
+      "Inventory Control",
+      "Demand Forecasting"
+    ],
+    "certifications": [
+      "APICS Certified Supply Chain Professional",
+      "Six Sigma Black Belt",
+      "ISM Certified Professional in Supply Management"
+    ],
+    "case_studies": "Helped a Fortune 500 retailer reduce inventory costs by 23% while improving order fulfillment rates by implementing advanced forecasting algorithms and warehouse optimization techniques.",
+    "website": "https://supplychainsolutions.example.com",
+    "contact_info": "contact@supplychainsolutions.example.com | +1-555-123-4567",
+    "budget_tier": "enterprise",
+    "partner_id": "partner-123456",
+    "tags": [
+      "supply chain",
+      "logistics",
+      "consulting",
+      "enterprise"
+    ],
+    "content": "Partner name: SupplyChain Solutions Inc.\nBio: SupplyChain Solutions Inc. is a leading consulting firm specializing in end-to-end supply chain optimization. With over 15 years of experience, we help companies streamline their logistics, reduce costs, and improve operational efficiency.\nExpertise: Supply Chain Optimization, Logistics Management, Inventory Control, Demand Forecasting\nCase studies: Helped a Fortune 500 retailer reduce inventory costs by 23% while improving order fulfillment rates by implementing advanced forecasting algorithms and warehouse optimization techniques.",
+    "tenant_id": "default"
+  }
+}

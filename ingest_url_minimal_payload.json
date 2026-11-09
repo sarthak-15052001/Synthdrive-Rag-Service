@@ -1,0 +1,4 @@
+{
+  "tenant_id": "default",
+  "url": "https://httpbin.org/json"
+}

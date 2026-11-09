@@ -1,0 +1,14 @@
+{
+  "query_str": "How does SynthDrive handle entity extraction and relationship mapping?",
+  "tenant_id": "default",
+  "top_k": 7,
+  "filters": {
+    "document_type": "technical",
+    "tags": [
+      "neo4j",
+      "graph",
+      "entity-extraction"
+    ],
+    "author": "SynthDrive Team"
+  }
+}

@@ -1,0 +1,5 @@
+This is a sample text file for testing the file ingestion endpoint.
+It contains multiple lines of text to simulate a real document.
+
+The RAG service should process this file and extract its content.
+This test is designed to verify the /api/v1/rag/ingest/file endpoint functionality.

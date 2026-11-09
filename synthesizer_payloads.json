@@ -1,0 +1,236 @@
+[
+  {
+    "payload_name": "AI Video Tools",
+    "description": "Basic payload with AI video generation tools",
+    "payload": {
+      "query": "What AI tools are available for video generation?",
+      "organization_id": "test-org-123",
+      "tenant_id": "default",
+      "retrieved_docs": [
+        {
+          "content": "Runway is an AI video generation tool that allows users to create videos from text prompts. It offers features like text-to-video, image-to-video, and video editing capabilities.",
+          "metadata": {"type": "ai_tool"},
+          "source": "global_tools_database",
+          "citation_id": "doc-1"
+        },
+        {
+          "content": "Synthesia is a platform that enables users to create AI-generated videos with virtual presenters. Users can input text, and the platform will generate a video with a virtual human presenting the content.",
+          "metadata": {"type": "ai_tool"},
+          "source": "global_tools_database",
+          "citation_id": "doc-2"
+        },
+        {
+          "content": "Descript offers AI-powered video editing tools that allow users to edit video by editing text. It includes features like overdub (voice cloning), screen recording, and transcription.",
+          "metadata": {"type": "ai_tool"},
+          "source": "global_tools_database",
+          "citation_id": "doc-3"
+        }
+      ],
+      "graph_insights": [
+        {
+          "content": "The marketing team has been using Runway for their recent video campaigns.",
+          "metadata": {"type": "graph_relationship"},
+          "source": "graph_database",
+          "citation_id": "graph-rel-1",
+          "explanation": "This insight shows that the marketing team has practical experience with Runway.",
+          "inferred_context": "The marketing team might have valuable feedback on Runway's effectiveness for promotional content."
+        }
+      ]
+    }
+  },
+  {
+    "payload_name": "Data Analysis Tools",
+    "description": "Payload for data analysis tools with multiple graph insights",
+    "payload": {
+      "query": "What are the best tools for data analysis and visualization?",
+      "organization_id": "test-org-456",
+      "tenant_id": "default",
+      "retrieved_docs": [
+        {
+          "content": "Tableau is a powerful data visualization tool that helps users create interactive dashboards and reports. It connects to various data sources and offers drag-and-drop functionality for creating visualizations.",
+          "metadata": {"type": "ai_tool", "category": "data_visualization"},
+          "source": "global_tools_database",
+          "citation_id": "doc-1"
+        },
+        {
+          "content": "Power BI is Microsoft's business analytics service that provides interactive visualizations with self-service business intelligence capabilities. It integrates well with other Microsoft products.",
+          "metadata": {"type": "ai_tool", "category": "data_visualization"},
+          "source": "global_tools_database",
+          "citation_id": "doc-2"
+        },
+        {
+          "content": "Python with libraries like Pandas, NumPy, and Matplotlib offers powerful data analysis and visualization capabilities for data scientists and analysts.",
+          "metadata": {"type": "ai_tool", "category": "programming"},
+          "source": "global_tools_database",
+          "citation_id": "doc-3"
+        }
+      ],
+      "graph_insights": [
+        {
+          "content": "The finance department has standardized on Power BI for all their reporting needs.",
+          "metadata": {"type": "graph_relationship", "department": "finance"},
+          "source": "graph_database",
+          "citation_id": "graph-rel-1",
+          "explanation": "This insight indicates that Power BI is the preferred tool for the finance department.",
+          "inferred_context": "There may be existing Power BI reports and expertise within the finance team."
+        },
+        {
+          "content": "The data science team primarily uses Python for their analysis workflows.",
+          "metadata": {"type": "graph_relationship", "department": "data_science"},
+          "source": "graph_database",
+          "citation_id": "graph-rel-2",
+          "explanation": "This insight shows the data science team's preference for Python-based tools.",
+          "inferred_context": "The data science team likely has expertise in Python libraries for data analysis."
+        }
+      ]
+    }
+  },
+  {
+    "payload_name": "Project Management Tools",
+    "description": "Payload for project management tools with no graph insights",
+    "payload": {
+      "query": "What are the best project management tools for software development teams?",
+      "organization_id": "test-org-789",
+      "tenant_id": "default",
+      "retrieved_docs": [
+        {
+          "content": "Jira is a popular project management tool designed specifically for software development teams. It offers features like agile boards, sprint planning, and issue tracking.",
+          "metadata": {"type": "ai_tool", "category": "project_management"},
+          "source": "global_tools_database",
+          "citation_id": "doc-1"
+        },
+        {
+          "content": "Asana is a work management platform that helps teams organize, track, and manage their work. It offers features like task assignments, project timelines, and custom workflows.",
+          "metadata": {"type": "ai_tool", "category": "project_management"},
+          "source": "global_tools_database",
+          "citation_id": "doc-2"
+        },
+        {
+          "content": "Trello is a visual collaboration tool that uses boards, lists, and cards to help teams organize and prioritize projects. It's known for its simplicity and flexibility.",
+          "metadata": {"type": "ai_tool", "category": "project_management"},
+          "source": "global_tools_database",
+          "citation_id": "doc-3"
+        },
+        {
+          "content": "GitHub Projects is a project management tool integrated with GitHub repositories. It allows teams to track issues, pull requests, and tasks directly within GitHub.",
+          "metadata": {"type": "ai_tool", "category": "project_management"},
+          "source": "global_tools_database",
+          "citation_id": "doc-4"
+        }
+      ],
+      "graph_insights": []
+    }
+  },
+  {
+    "payload_name": "AI Writing Assistants",
+    "description": "Payload for AI writing tools with detailed metadata",
+    "payload": {
+      "query": "What AI tools can help improve my writing?",
+      "organization_id": "test-org-101",
+      "tenant_id": "content-team",
+      "retrieved_docs": [
+        {
+          "content": "Grammarly is an AI-powered writing assistant that helps users improve their writing by checking grammar, spelling, punctuation, clarity, engagement, and delivery mistakes.",
+          "metadata": {
+            "type": "ai_tool",
+            "category": "writing",
+            "pricing": "Freemium",
+            "rating": 4.7,
+            "popularity": "High"
+          },
+          "source": "global_tools_database",
+          "citation_id": "doc-1"
+        },
+        {
+          "content": "Hemingway Editor is a writing tool that highlights complex sentences, passive voice, adverbs, and other elements that can make writing difficult to read.",
+          "metadata": {
+            "type": "ai_tool",
+            "category": "writing",
+            "pricing": "Free online, paid desktop app",
+            "rating": 4.2,
+            "popularity": "Medium"
+          },
+          "source": "global_tools_database",
+          "citation_id": "doc-2"
+        },
+        {
+          "content": "ProWritingAid is a grammar checker, style editor, and writing mentor in one package. It provides detailed reports on writing style, grammar, overused words, readability, and more.",
+          "metadata": {
+            "type": "ai_tool",
+            "category": "writing",
+            "pricing": "Subscription-based",
+            "rating": 4.5,
+            "popularity": "Medium"
+          },
+          "source": "global_tools_database",
+          "citation_id": "doc-3"
+        }
+      ],
+      "graph_insights": [
+        {
+          "content": "The content marketing team has a company-wide subscription to Grammarly Premium.",
+          "metadata": {"type": "graph_relationship", "department": "marketing"},
+          "source": "graph_database",
+          "citation_id": "graph-rel-1",
+          "explanation": "This insight indicates that Grammarly Premium is already available to the content team.",
+          "inferred_context": "Team members can use the premium features of Grammarly without additional cost."
+        }
+      ]
+    }
+  },
+  {
+    "payload_name": "Customer Support Tools",
+    "description": "Payload for customer support tools with complex graph insights",
+    "payload": {
+      "query": "What are the best AI-powered customer support tools?",
+      "organization_id": "test-org-202",
+      "tenant_id": "support-team",
+      "retrieved_docs": [
+        {
+          "content": "Zendesk is a customer service platform that includes ticketing, self-service options, and live chat capabilities. It offers AI-powered features like Answer Bot to help resolve customer queries faster.",
+          "metadata": {"type": "ai_tool", "category": "customer_support"},
+          "source": "global_tools_database",
+          "citation_id": "doc-1"
+        },
+        {
+          "content": "Intercom is a messaging platform that allows businesses to communicate with customers through their website, mobile app, and social media. It includes chatbots and automated responses.",
+          "metadata": {"type": "ai_tool", "category": "customer_support"},
+          "source": "global_tools_database",
+          "citation_id": "doc-2"
+        },
+        {
+          "content": "Freshdesk is a cloud-based customer support software that provides a comprehensive helpdesk solution with AI-powered features like automated ticket routing and chatbots.",
+          "metadata": {"type": "ai_tool", "category": "customer_support"},
+          "source": "global_tools_database",
+          "citation_id": "doc-3"
+        }
+      ],
+      "graph_insights": [
+        {
+          "content": "The support team currently uses Zendesk for ticket management.",
+          "metadata": {"type": "graph_relationship", "department": "support"},
+          "source": "graph_database",
+          "citation_id": "graph-rel-1",
+          "explanation": "This insight shows that Zendesk is already implemented in the organization.",
+          "inferred_context": "The team has existing workflows and data in Zendesk."
+        },
+        {
+          "content": "The sales team uses Intercom for initial customer communications.",
+          "metadata": {"type": "graph_relationship", "department": "sales"},
+          "source": "graph_database",
+          "citation_id": "graph-rel-2",
+          "explanation": "This insight indicates that Intercom is being used by the sales team.",
+          "inferred_context": "There might be opportunities for integration between sales and support workflows."
+        },
+        {
+          "content": "Customer satisfaction scores improved by 15% after implementing Zendesk's AI features last quarter.",
+          "metadata": {"type": "graph_relationship", "metric": "customer_satisfaction"},
+          "source": "graph_database",
+          "citation_id": "graph-rel-3",
+          "explanation": "This insight provides quantitative evidence of Zendesk's impact.",
+          "inferred_context": "The AI features in Zendesk have demonstrated value for the organization."
+        }
+      ]
+    }
+  }
+]
